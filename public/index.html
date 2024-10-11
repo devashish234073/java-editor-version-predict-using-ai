@@ -1,4 +1,5 @@
 <html>
+
 <head>
     <style>
         #editor {
@@ -8,12 +9,26 @@
         }
     </style>
 </head>
+
 <body>
-    <div id="render"></div>
-    <div id="editor"></div>
+    <table>
+        <tr>
+            <td>
+                <div id="editor"></div>
+            </td>
+        </tr>
+        <tr>
+            <td><select id="models"></select></td>
+        </tr>
+    </table>
     <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
-    <script>function $(selector) { return document.querySelector(selector); }
-        $("#render").style.display = "none";
+    <script>
+        function $(selector) {
+            return document.querySelector(selector);
+        }
+        function _(tag) {
+            return document.createElement(tag);
+        }
         require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' } });
         require(['vs/editor/editor.main'], function () {
             var editor = monaco.editor.create($('#editor'), {
@@ -21,6 +36,35 @@
                 language: "java"
             });
         });
+        let models = null;
+        async function getModels() {
+            const modelsResp = await fetch('/models', { method: 'GET' });
+            const reader = modelsResp.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let result;
+            let chunk = "";
+            while (!result || !result.done) {
+                result = await reader.read();
+                chunk += decoder.decode(result.value || new Uint8Array, { stream: !result.done });
+            }
+            models = JSON.parse(chunk);
+            console.log("models", models);
+            populateModelsDropDown();
+        }
+        function populateModelsDropDown(){
+            for(let i=0;i<models.length;i++) {
+                let model = models[i];
+                let opt = _("option");
+                opt.value = model;
+                opt.innerText = model;
+                $("#models").appendChild(opt);
+            }
+        }
+        try {
+            getModels();
+        } catch (e) {
+            console.log(e);
+        }
     </script>
 </body>
 
