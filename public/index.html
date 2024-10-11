@@ -6,51 +6,127 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
-        #editor {
-            width: 800px;
-            height: 600px;
-            border: 1px solid grey;
+        /* Modernize the overall page */
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
         }
 
+        /* Center and style the editor */
+        #editor {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ddd;
+            
+        }
+
+        /* Style buttons with modern hover effect */
         button {
             width: 150px;
-            height: 30px;
-            border: none;
-            background-color: green;
+            height: 40px;
+            background-color: #28a745;
             color: white;
-            border-radius: 15px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s ease;
         }
 
+        button:hover {
+            background-color: #218838;
+        }
+
+        /* Responsive table styling */
         table {
-            margin-left: auto;
-            margin-right: auto;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+            border-spacing: 10px;
         }
 
+        /* Select dropdown styling */
+        select {
+            width: 100%;
+            max-width: 150px;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        /* Input field styling */
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Popup container styling */
         #popupContainer {
-            margin-top: -10px;
-            margin-left: -10px;
             position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
-            z-index: 100;
             background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
         }
 
+        /* Popup box */
         #popup {
-            margin-left: 50px;
-            margin-right: 50px;
-            margin-top: 50px;
-            color: lightgreen;
-            font-size: 30px;
+            padding: 20px;
+            background-color: #2d2f36;
+            color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            font-size: 24px;
+            max-width: 80%;
         }
 
+        /* Description text */
         #description {
-            text-wrap: balance;
-            width: 700PX;
+            max-width: 800px;
+            margin: 20px auto;
+            font-size: 16px;
+            color: #555;
+            text-align: justify;
+            padding: 10px;
         }
 
-        #jdkPath {
+        /* Make jdkPath input responsive */
+        #jdkPath, #jdkVersion {
             width: 80%;
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+        }
+
+        /* Responsive table layout */
+        @media (max-width: 768px) {
+            table {
+                display: block;
+                width: 100%;
+            }
+
+            td {
+                display: block;
+                margin-bottom: 10px;
+                width: 100%;
+            }
+
+            button {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -82,7 +158,8 @@
         </tr>
         <tr>
             <td>Register Jdk</td>
-            <td colspan="2"><input type="text" id="jdkPath"></td>
+            <td><input type="text" id="jdkVersion" placeholder="jdk version"></td>
+            <td><input type="text" id="jdkPath" placeholder="jdk path"></td>
             <td><button onclick="registerJdk()">Register</button></td>
         </tr>
     </table>
@@ -152,12 +229,12 @@
             console.log(registeredJdks);
         }
 
-        setInterval(getRegisteredJdks,10000);//refresh it every 10 seconds
+        setInterval(getRegisteredJdks, 10000);//refresh it every 10 seconds
 
         async function registerJdk() {
-            let version = $("#version").value.replace("version:","").trim();
+            let version = $("#jdkVersion").value.trim();
             let path = $("#jdkPath").value.trim();
-            if(version=="" || path=="") {
+            if (version == "" || path == "") {
                 alert("version and path are required");
                 return;
             }
@@ -171,6 +248,7 @@
 
             getRegisteredJdks();
             $("#jdkPath").value = "";
+            $("#jdkVersion").value = "";
         }
         async function predictVersion() {
             if (editor == null) {
