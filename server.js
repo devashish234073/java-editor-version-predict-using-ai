@@ -57,12 +57,57 @@ app.post('/registerJdk', (req, res) => {
   res.end("done");
 });
 
-app.post('/generate', (req, res) => {
-  const prompt = req.body.prompt;
+app.post('/runAgainstJdk',(req,res)=>{
+
+});
+
+app.post('/runAgainstAI',(req,res)=>{
+  const code = req.body.code;
+  const version = req.body.jdkVersion;
   const MODEL = req.body.model;
   const postData = JSON.stringify({
     model: MODEL,
-    prompt: prompt
+    prompt: `Guess the output when this java code runs against java ${version} compiler, do not provide any explanation, just the output or error if any  `+code
+  });
+
+  const options = {
+    hostname: 'localhost',
+    port: 11434,
+    path: '/api/generate',
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Length': Buffer.byteLength(postData)
+    }
+  };
+
+  const apiReq = http.request(options, (apiRes) => {
+    res.setHeader('Content-Type', 'text/plain');
+
+    apiRes.on('data', (chunk) => {
+      res.write(chunk);
+    });
+
+    apiRes.on('end', () => {
+      res.end();
+    });
+  });
+
+  apiReq.on('error', (e) => {
+    console.error(`Problem with request: ${e.message}`);
+    res.status(500).send('Internal Server Error');
+  });
+
+  apiReq.write(postData);
+  apiReq.end();
+});
+
+app.post('/predictJavaVersion', (req, res) => {
+  const code = req.body.code;
+  const MODEL = req.body.model;
+  const postData = JSON.stringify({
+    model: MODEL,
+    prompt: " what is the minimum version of java required to run this code reply only in json with the version required and description keys, in the description give the reason why that version is required " + code
   });
 
   const options = {

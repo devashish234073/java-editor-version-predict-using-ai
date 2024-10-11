@@ -141,7 +141,7 @@
     </div>
     <table>
         <tr>
-            <td colspan="4">
+            <td colspan="5">
                 <div id="editor"></div>
             </td>
         </tr>
@@ -149,17 +149,18 @@
             <td><select id="models"></select></td>
             <td><button onclick="predictVersion()">Check Needed Version</button></td>
             <td id="version"></td>
-            <td><button>Run</button></td>
+            <td><button onclick="run()">Run</button></td>
+            <td><select id="runAgainst"><option id="jdkOPT">against JDK</option><option>against AI</option></select></td>
         </tr>
         <tr>
-            <td colspan="4">
+            <td colspan="5">
                 <p id="description"></p>
             </td>
         </tr>
         <tr>
             <td>Register Jdk</td>
             <td><input type="text" id="jdkVersion" placeholder="jdk version"></td>
-            <td><input type="text" id="jdkPath" placeholder="jdk path"></td>
+            <td colspan="2"><input type="text" id="jdkPath" placeholder="jdk path"></td>
             <td><button onclick="registerJdk()">Register</button></td>
         </tr>
     </table>
@@ -255,15 +256,63 @@
                 alert("editor not loaded");
                 return;
             }
-            let prompt = editor.getValue();
+            let code = editor.getValue();
             $("#popupContainer").style.display = "block";
             $("#popup").innerText = "Please wait while getting version details using AI model " + $("#models").value;
-            const response = await fetch('/generate', {
+            const response = await fetch('/predictJavaVersion', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ prompt: " what is the minimum version of java required to run this code reply only in json with the version required and description keys in the description give the reason why that version is required " + prompt, model: $("#models").value })
+                body: JSON.stringify({ code: code, model: $("#models").value })
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let result;
+            let aiResp = "";
+
+            while (!result || !result.done) {
+                result = await reader.read();
+                const chunk = decoder.decode(result.value || new Uint8Array, { stream: !result.done });
+                try {
+                    let chunkObj = JSON.parse(chunk);
+                    aiResp += chunkObj.response;
+                    $("#popup").innerText = aiResp;
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            console.log(aiResp);
+            aiResp = aiResp.split("```").join("").trim();
+            aiResp = JSON.parse(aiResp);
+            $("#version").innerText = "version:" + aiResp.version;
+            $("#description").innerText = JSON.stringify(aiResp.description);
+            $("#popupContainer").style.display = "none";
+        }
+
+        function run() {
+            if($("#runAgainst").value == "against AI") {
+                runAgainstAI();
+            } else {
+
+            }
+        }
+
+        async function runAgainstAI() {
+            if (editor == null) {
+                alert("editor not loaded");
+                return;
+            }
+            let code = editor.getValue();
+            $("#popupContainer").style.display = "block";
+            $("#popup").innerText = "Please wait while getting code output using AI model " + $("#models").value;
+            const response = await fetch('/runAgainstAI', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ code: code, version: $("#version").innerText.replace("version:","").trim() ,model: $("#models").value })
             });
 
             const reader = response.body.getReader();
