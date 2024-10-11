@@ -1,0 +1,27 @@
+<html>
+<head>
+    <style>
+        #editor {
+            width: 800px;
+            height: 600px;
+            border: 1px solid grey;
+        }
+    </style>
+</head>
+<body>
+    <div id="render"></div>
+    <div id="editor"></div>
+    <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
+    <script>function $(selector) { return document.querySelector(selector); }
+        $("#render").style.display = "none";
+        require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' } });
+        require(['vs/editor/editor.main'], function () {
+            var editor = monaco.editor.create($('#editor'), {
+                value: 'public class Abc(){}',
+                language: "java"
+            });
+        });
+    </script>
+</body>
+
+</html>
