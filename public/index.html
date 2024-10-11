@@ -7,18 +7,65 @@
             height: 600px;
             border: 1px solid grey;
         }
+
+        button {
+            width: 150px;
+            height: 30px;
+            border: none;
+            background-color: green;
+            color: white;
+            border-radius: 15px;
+        }
+
+        table {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #popupContainer {
+            margin-top: -10px;
+            margin-left: -10px;
+            position: fixed;
+            width: 100vw;
+            height: 100vh;
+            z-index: 100;
+            background-color: rgba(0,0,0,0.8);
+        }
+        #popup {
+            margin-top: 50px;
+            color:yellow;
+            font-size: 30px;
+        }
+        #description {
+            text-wrap: balance;
+            width: 700PX;
+        }
     </style>
+
 </head>
 
 <body>
+    <div id="popupContainer">
+        <table>
+            <tr>
+                <td id="popup"></td>
+            </tr>
+        </table>
+    </div>
     <table>
         <tr>
-            <td>
+            <td colspan="4">
                 <div id="editor"></div>
             </td>
         </tr>
         <tr>
             <td><select id="models"></select></td>
+            <td><button onclick="predictVersion()">Check Needed Version</button></td>
+            <td id="version"></td>
+            <td><button>Run</button></td>
+        </tr>
+        <tr>
+            <td colspan="4"><p id="description"></p></td>
         </tr>
     </table>
     <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
@@ -29,9 +76,11 @@
         function _(tag) {
             return document.createElement(tag);
         }
+        $("#popupContainer").style.display = "none";
+        let editor = null;
         require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' } });
         require(['vs/editor/editor.main'], function () {
-            var editor = monaco.editor.create($('#editor'), {
+            editor = monaco.editor.create($('#editor'), {
                 value: 'public class Abc(){}',
                 language: "java"
             });
@@ -51,8 +100,8 @@
             console.log("models", models);
             populateModelsDropDown();
         }
-        function populateModelsDropDown(){
-            for(let i=0;i<models.length;i++) {
+        function populateModelsDropDown() {
+            for (let i = 0; i < models.length; i++) {
                 let model = models[i];
                 let opt = _("option");
                 opt.value = model;
@@ -64,6 +113,44 @@
             getModels();
         } catch (e) {
             console.log(e);
+        }
+        async function predictVersion() {
+            if (editor == null) {
+                alert("editor not loaded");
+                return;
+            }
+            let prompt = editor.getValue();
+            $("#popupContainer").style.display = "block";
+            $("#popup").innerText = "Please wait while getting version details using AI model "+$("#models").value;
+            const response = await fetch('/generate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ prompt: " what is the minimum version of java required to run this code reply only in json with the version required and description keys in the description give the reason why that version is required " + prompt, model: $("#models").value })
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let result;
+            let aiResp = "";
+            
+            while (!result || !result.done) {
+                result = await reader.read();
+                const chunk = decoder.decode(result.value || new Uint8Array, { stream: !result.done });
+                try {
+                    let chunkObj = JSON.parse(chunk);
+                    aiResp += chunkObj.response;
+                    $("#popup").innerText = aiResp;
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            console.log(aiResp);
+            aiResp = JSON.parse(aiResp);
+            $("#version").innerText = "version:" + aiResp.version;
+            $("#description").innerText = JSON.stringify(aiResp.description);
+            $("#popupContainer").style.display = "none";
         }
     </script>
 </body>
