@@ -283,6 +283,7 @@
                 }
             }
             console.log(aiResp);
+            aiResp = aiResp.split("```").join("").trim();
             aiResp = JSON.parse(aiResp);
             $("#version").innerText = "version:" + aiResp.version;
             $("#description").innerText = JSON.stringify(aiResp.description);
