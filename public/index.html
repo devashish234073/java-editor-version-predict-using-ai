@@ -48,6 +48,10 @@
             text-wrap: balance;
             width: 700PX;
         }
+
+        #jdkPath {
+            width: 80%;
+        }
     </style>
 </head>
 
@@ -75,6 +79,11 @@
             <td colspan="4">
                 <p id="description"></p>
             </td>
+        </tr>
+        <tr>
+            <td>Register Jdk</td>
+            <td colspan="2"><input type="text" id="jdkPath"></td>
+            <td><button onclick="registerJdk()">Register</button></td>
         </tr>
     </table>
     <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
@@ -109,6 +118,7 @@
             console.log("models", models);
             populateModelsDropDown();
         }
+
         function populateModelsDropDown() {
             for (let i = 0; i < models.length; i++) {
                 let model = models[i];
@@ -122,6 +132,45 @@
             getModels();
         } catch (e) {
             console.log(e);
+        }
+
+        async function getRegisteredJdks() {
+            const modelsResp = await fetch('/getRegisteredJdks', { method: 'GET' });
+            const reader = modelsResp.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let result;
+            let chunk = "";
+            while (!result || !result.done) {
+                result = await reader.read();
+                chunk += decoder.decode(result.value || new Uint8Array, { stream: !result.done });
+            }
+            registeredJdks = JSON.parse(chunk);
+            populateRegisteredJdks(registeredJdks);
+        }
+
+        function populateRegisteredJdks(registeredJdks) {
+            console.log(registeredJdks);
+        }
+
+        setInterval(getRegisteredJdks,10000);//refresh it every 10 seconds
+
+        async function registerJdk() {
+            let version = $("#version").value.replace("version:","").trim();
+            let path = $("#jdkPath").value.trim();
+            if(version=="" || path=="") {
+                alert("version and path are required");
+                return;
+            }
+            const response = await fetch('/registerJdk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ jdkVersion: version, jdkPath: path })
+            });
+
+            getRegisteredJdks();
+            $("#jdkPath").value = "";
         }
         async function predictVersion() {
             if (editor == null) {

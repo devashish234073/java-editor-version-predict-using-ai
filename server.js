@@ -36,12 +36,25 @@ if(process.argv[2]) {
 const app = express();
 const PORT = 9999;
 
+let registeredJdks = {};
+
 app.use(express.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.get('/models',(req,res)=>{
   res.end(JSON.stringify(models));
+});
+
+app.get('/getRegisteredJdks',(req,res)=>{
+  res.end(JSON.stringify(registeredJdks));
+});
+
+app.post('/registerJdk', (req, res) => {
+  const jdkVersion = req.body.jdkVersion;
+  const jdkPath = req.body.jdkPath;
+  registeredJdks[jdkVersion] = jdkPath;
+  res.end("done");
 });
 
 app.post('/generate', (req, res) => {
