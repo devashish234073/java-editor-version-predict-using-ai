@@ -6,30 +6,30 @@ const fs = require("fs");
 
 models = [];
 function populateModels() {
-    exec('ollama list', (error, stdout, stderr) => {
-        if (error) {
-            console.error(`Error executing command: ${error.message}`);
-            return;
-        }
-        if (stderr) {
-            console.error(`Error: ${stderr}`);
-            return;
-        }
-        const lines = stdout.split('\n');
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (line) {
-                const parts = line.split(/\s+/);
-                const modelName = parts[0];
-                models.push(modelName);
-            }
-        }
-        console.log("available models ",models);
-    });
+  exec('ollama list', (error, stdout, stderr) => {
+    if (error) {
+      console.error(`Error executing command: ${error.message}`);
+      return;
+    }
+    if (stderr) {
+      console.error(`Error: ${stderr}`);
+      return;
+    }
+    const lines = stdout.split('\n');
+    for (let i = 1; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (line) {
+        const parts = line.split(/\s+/);
+        const modelName = parts[0];
+        models.push(modelName);
+      }
+    }
+    console.log("available models ", models);
+  });
 }
-if(process.argv[2]) {
+if (process.argv[2]) {
   models.push(process.argv[2]);
-  console.log("overriding with only one model ",models);
+  console.log("overriding with only one model ", models);
 } else {
   populateModels();
 }
@@ -43,11 +43,11 @@ app.use(express.json());
 
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/models',(req,res)=>{
+app.get('/models', (req, res) => {
   res.end(JSON.stringify(models));
 });
 
-app.get('/getRegisteredJdks',(req,res)=>{
+app.get('/getRegisteredJdks', (req, res) => {
   res.end(JSON.stringify(registeredJdks));
 });
 
@@ -58,22 +58,40 @@ app.post('/registerJdk', (req, res) => {
   res.end("done");
 });
 
-app.post('/runAgainstJdk',(req,res)=>{
-  const code = req.body.code;
+app.post('/runAgainstJdk', (req, res) => {
+  let code = req.body.code;
   const version = req.body.jdkVersion;
-  fs.writeFile("Test.java",code,(error)=>{
+  let codeObj = processCode(code);
+  fs.writeFile(codeObj.className, codeObj.code, (error) => {
     let obj = {};
     res.end(JSON.stringify(obj));
   });
 });
 
-app.post('/runAgainstAI',(req,res)=>{
+function processCode(code) {
+  const packageRegex = /(package\s+[a-zA-Z_][a-zA-Z0-9_.]*\s*;)/;
+  const classRegex = /class\s+([A-Za-z_][A-Za-z0-9_]*)\s*{/;
+  const packageMatch = javaCode.match(packageRegex);
+  const packageDeclaration = packageMatch ? packageMatch[1] : null;
+  if(packageDeclaration) {
+    code = code.replace(packageDeclaration,"");
+  }
+  const classMatch = javaCode.match(classRegex);
+  const className = classMatch ? classMatch[1] : null;
+  if(!className) {
+    className = "TestClass";
+    code = "public class TestClass {"+code+"}";
+  }
+  return { "code": code, "className": className };
+}
+
+app.post('/runAgainstAI', (req, res) => {
   const code = req.body.code;
   const version = req.body.jdkVersion;
   const MODEL = req.body.model;
   const postData = JSON.stringify({
     model: MODEL,
-    prompt: `Guess the output when this java code runs against java ${version} compiler, do not provide any explanation, just the output of this `+code
+    prompt: `Guess the output when this java code runs against java ${version} compiler, do not provide any explanation, just the output of this ` + code
   });
 
   const options = {
