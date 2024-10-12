@@ -2,6 +2,7 @@ const express = require('express');
 const http = require('http');
 const path = require('path');
 const { exec } = require('child_process');
+const fs = require("fs");
 
 models = [];
 function populateModels() {
@@ -58,7 +59,12 @@ app.post('/registerJdk', (req, res) => {
 });
 
 app.post('/runAgainstJdk',(req,res)=>{
-
+  const code = req.body.code;
+  const version = req.body.jdkVersion;
+  fs.writeFile("Test.java",code,(error)=>{
+    let obj = {};
+    res.end(JSON.stringify(obj));
+  });
 });
 
 app.post('/runAgainstAI',(req,res)=>{

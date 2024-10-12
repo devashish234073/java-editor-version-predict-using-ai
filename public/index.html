@@ -327,8 +327,48 @@
             if($("#runAgainst").value == "against AI") {
                 runAgainstAI();
             } else {
-
+                runAgainstJdk();
             }
+        }
+
+        async function runAgainstJdk() {
+            if($("#version").innerText=="") {
+                alert("Click on 'Check Needed Version' first to get the version");
+                return;
+            }
+            if (editor == null) {
+                alert("editor not loaded");
+                return;
+            }
+            let code = editor.getValue();
+            $("#popupContainer").style.display = "block";
+            let version = $("#version").innerText.replace("version:","").trim();
+            $("#popup").innerText = "Please wait while getting code output by running against jdk " + version;
+            const response = await fetch('/runAgainstJdk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ code: code, version: version })
+            });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder('utf-8');
+            let result;
+            let aiResp = "";
+
+            while (!result || !result.done) {
+                result = await reader.read();
+                const chunk = decoder.decode(result.value || new Uint8Array, { stream: !result.done });
+                try {
+                    let chunkObj = JSON.parse(chunk);
+                    aiResp += chunkObj.response;
+                    $("#popup").innerText = aiResp;
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+            console.log(aiResp);
         }
 
         async function runAgainstAI() {
