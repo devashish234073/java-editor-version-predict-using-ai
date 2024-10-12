@@ -84,8 +84,8 @@ app.post('/runAgainstJdk', (req, res) => {
           return;
         }
         obj["javacStdout"] = stdout;
-        filePath = "public/" + codeObj.className;//class file path
-        exec("\""+jdkPath+'/java\" '+filePath, (error, stdout, stderr) => {
+        filePath = codeObj.className;//class file path
+        exec("\""+jdkPath+'/java\" '+filePath,{cwd: 'public'}, (error, stdout, stderr) => {
           if (error) {
             console.error(`Error executing command: ${error.message}`);
             obj["error"] = error.message;
@@ -98,6 +98,7 @@ app.post('/runAgainstJdk', (req, res) => {
             res.end(JSON.stringify(obj));
             return;
           }
+          console.log("stdout",stdout);
           obj["output"] = stdout;
           res.end(JSON.stringify(obj));
         });

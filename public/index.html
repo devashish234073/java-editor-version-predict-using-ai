@@ -377,6 +377,7 @@
             while (!result || !result.done) {
                 result = await reader.read();
                 const chunk = decoder.decode(result.value || new Uint8Array, { stream: !result.done });
+                console.log("chunk",chunk);
                 try {
                     let chunkObj = JSON.parse(chunk);
                     if (chunkObj.error) {
@@ -384,8 +385,10 @@
                         $("#popup").innerText = error;
                         break;
                     }
-                    aiResp += chunkObj.response;
-                    $("#popup").innerText = aiResp;
+                    if(chunkObj) {
+                        aiResp += JSON.stringify(chunkObj.output?chunkObj.output.split("\r").join("").split("\n").join("<br>"):"");
+                    }
+                    $("#popup").innerHTML = aiResp;
                 } catch (e) {
                     console.error(e);
                 }
