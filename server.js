@@ -71,12 +71,12 @@ app.post('/runAgainstJdk', (req, res) => {
 function processCode(code) {
   const packageRegex = /(package\s+[a-zA-Z_][a-zA-Z0-9_.]*\s*;)/;
   const classRegex = /class\s+([A-Za-z_][A-Za-z0-9_]*)\s*{/;
-  const packageMatch = javaCode.match(packageRegex);
+  const packageMatch = code.match(packageRegex);
   const packageDeclaration = packageMatch ? packageMatch[1] : null;
   if(packageDeclaration) {
     code = code.replace(packageDeclaration,"");
   }
-  const classMatch = javaCode.match(classRegex);
+  const classMatch = code.match(classRegex);
   const className = classMatch ? classMatch[1] : null;
   if(!className) {
     className = "TestClass";
@@ -149,6 +149,7 @@ app.post('/predictJavaVersion', (req, res) => {
     res.setHeader('Content-Type', 'text/plain');
 
     apiRes.on('data', (chunk) => {
+      console.log("sending chunk",chunk);
       res.write(chunk);
     });
 
@@ -161,7 +162,7 @@ app.post('/predictJavaVersion', (req, res) => {
     console.error(`Problem with request: ${e.message}`);
     res.status(500).send('Internal Server Error');
   });
-
+  
   apiReq.write(postData);
   apiReq.end();
 });
