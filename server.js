@@ -67,7 +67,7 @@ app.post('/runAgainstAI',(req,res)=>{
   const MODEL = req.body.model;
   const postData = JSON.stringify({
     model: MODEL,
-    prompt: `Guess the output when this java code runs against java ${version} compiler, do not provide any explanation, just the output or error if any  `+code
+    prompt: `Guess the output when this java code runs against java ${version} compiler, do not provide any explanation, just the output of this `+code
   });
 
   const options = {

@@ -128,12 +128,22 @@
                 width: 100%;
             }
         }
+        #X {
+            display: block;
+            float: right;
+            background-color: red;
+            width: 40px;
+        }
+        button:active {
+            color: black;
+        }
     </style>
 </head>
 
 <body>
     <div id="popupContainer">
         <table>
+            <td><button id="X">X</button></td>
             <tr>
                 <td id="popup"></td>
             </tr>
@@ -172,7 +182,10 @@
         function _(tag) {
             return document.createElement(tag);
         }
-        $("#popupContainer").style.display = "none";
+        //$("#popupContainer").style.display = "block";
+        $("#X").addEventListener("click",()=>{
+            $("#popupContainer").style.display = "none";
+        });
         let editor = null;
         require.config({ paths: { 'vs': 'https://unpkg.com/monaco-editor@latest/min/vs' } });
         require(['vs/editor/editor.main'], function () {
@@ -332,11 +345,6 @@
                 }
             }
             console.log(aiResp);
-            aiResp = aiResp.split("```").join("").trim();
-            aiResp = JSON.parse(aiResp);
-            $("#version").innerText = "version:" + aiResp.version;
-            $("#description").innerText = JSON.stringify(aiResp.description);
-            $("#popupContainer").style.display = "none";
         }
     </script>
 </body>
