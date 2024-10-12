@@ -300,6 +300,7 @@
             aiResp = aiResp.split("```").join("").trim();
             aiResp = JSON.parse(aiResp);
             $("#version").innerText = "version:" + aiResp.version;
+            $("#jdkOPT").innerText = "against JDK "+aiResp.version;
             $("#description").innerText = JSON.stringify(aiResp.description);
             $("#popupContainer").style.display = "none";
         }
@@ -313,6 +314,10 @@
         }
 
         async function runAgainstAI() {
+            if($("#version").innerText=="") {
+                alert("Click on 'Check Needed Version' first to get the version");
+                return;
+            }
             if (editor == null) {
                 alert("editor not loaded");
                 return;
