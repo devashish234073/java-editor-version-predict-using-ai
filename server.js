@@ -60,12 +60,52 @@ app.post('/registerJdk', (req, res) => {
 
 app.post('/runAgainstJdk', (req, res) => {
   let code = req.body.code;
-  const version = req.body.jdkVersion;
+  const version = req.body.version;
   let codeObj = processCode(code);
-  fs.writeFile(codeObj.className, codeObj.code, (error) => {
-    let obj = {};
-    res.end(JSON.stringify(obj));
-  });
+  if (registeredJdks[version]) {
+    let filePath = "public/" + codeObj.className + ".java"
+    fs.writeFile(filePath, codeObj.code, (error) => {
+      let obj = {};
+      let jdkPath = registeredJdks[version];
+      if(jdkPath.indexOf("/bin")==-1) {
+        jdkPath = jdkPath + "/bin";
+      }
+      exec("\""+jdkPath+'/javac\" '+filePath, (error, stdout, stderr) => {
+        if (error) {
+          console.error(`Error executing command: ${error.message}`);
+          obj["error"] = error.message;
+          res.end(JSON.stringify(obj));
+          return;
+        }
+        if (stderr) {
+          console.error(`Error: ${stderr}`);
+          obj["error"] = stderr;
+          res.end(JSON.stringify(obj));
+          return;
+        }
+        obj["javacStdout"] = stdout;
+        filePath = "public/" + codeObj.className;//class file path
+        exec("\""+jdkPath+'/java\" '+filePath, (error, stdout, stderr) => {
+          if (error) {
+            console.error(`Error executing command: ${error.message}`);
+            obj["error"] = error.message;
+            res.end(JSON.stringify(obj));
+            return;
+          }
+          if (stderr) {
+            console.error(`Error: ${stderr}`);
+            obj["error"] = stderr;
+            res.end(JSON.stringify(obj));
+            return;
+          }
+          obj["output"] = stdout;
+          res.end(JSON.stringify(obj));
+        });
+      });
+    });
+  } else {
+    res.end(JSON.stringify({ "error": "jdk version " + version + " not registered" }));
+  }
 });
 
 function processCode(code) {
@@ -73,14 +113,14 @@ function processCode(code) {
   const classRegex = /class\s+([A-Za-z_][A-Za-z0-9_]*)\s*{/;
   const packageMatch = code.match(packageRegex);
   const packageDeclaration = packageMatch ? packageMatch[1] : null;
-  if(packageDeclaration) {
-    code = code.replace(packageDeclaration,"");
+  if (packageDeclaration) {
+    code = code.replace(packageDeclaration, "");
   }
   const classMatch = code.match(classRegex);
   const className = classMatch ? classMatch[1] : null;
-  if(!className) {
+  if (!className) {
     className = "TestClass";
-    code = "public class TestClass {"+code+"}";
+    code = "public class TestClass {" + code + "}";
   }
   return { "code": code, "className": className };
 }
@@ -149,7 +189,6 @@ app.post('/predictJavaVersion', (req, res) => {
     res.setHeader('Content-Type', 'text/plain');
 
     apiRes.on('data', (chunk) => {
-      console.log("sending chunk",chunk);
       res.write(chunk);
     });
 
@@ -162,7 +201,7 @@ app.post('/predictJavaVersion', (req, res) => {
     console.error(`Problem with request: ${e.message}`);
     res.status(500).send('Internal Server Error');
   });
-  
+
   apiReq.write(postData);
   apiReq.end();
 });
