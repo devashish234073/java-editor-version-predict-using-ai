@@ -174,6 +174,10 @@
             <td><button onclick="registerJdk()">Register</button></td>
         </tr>
     </table>
+    <table>
+        <tr><td id="registeredJdksLabel"></td></tr>
+    </table>
+    <table id="registeredJdks"></table>
     <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
     <script>
         function $(selector) {
@@ -241,8 +245,22 @@
 
         function populateRegisteredJdks(registeredJdks) {
             console.log(registeredJdks);
+            $("#registeredJdks").innerHTML = "";
+            let c = 0;
+            for(let k in registeredJdks) {
+                let tr = _("tr");
+                let td0 = _("td");
+                let td1 = _("td");
+                tr.appendChild(td0);
+                tr.appendChild(td1);
+                $("#registeredJdks").appendChild(tr);
+                td0.innerText = "java "+k;
+                td1.innerText = registeredJdks[k];
+                c++;
+            }
+            $("#registeredJdksLabel").innerText = c+" registered jdk(s)"
         }
-
+        getRegisteredJdks();
         setInterval(getRegisteredJdks, 10000);//refresh it every 10 seconds
 
         async function registerJdk() {
