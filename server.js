@@ -74,34 +74,49 @@ app.post('/runAgainstJdk', (req, res) => {
         if (error) {
           console.error(`Error executing command: ${error.message}`);
           obj["error"] = error.message;
-          res.end(JSON.stringify(obj));
-          return;
-        }
-        if (stderr) {
+          if(models.length>0) {//check error agsinst AI
+            const postData = JSON.stringify({
+              model: models[0],
+              prompt: `I am getting this error when running a java code ${error.message} how to fix this. My code is ${codeObj.code} please reply only a json with two keys one "issue" containing the issue and another "fix" containing the fixed code`
+            });
+            askAI(postData,res,obj);
+          } else {
+            res.end(JSON.stringify(obj));
+          }
+        } else if (stderr) {
           console.error(`Error: ${stderr}`);
           obj["error"] = stderr;
-          res.end(JSON.stringify(obj));
+          if(models.length>0) {//check error agsinst AI
+            const postData = JSON.stringify({
+              model: models[0],
+              prompt: `I am getting this error when running a java code ${error.message} how to fix this. My code is ${codeObj.code} please reply only a json with two keys one "issue" containing the issue and another "fix" containing the fixed code`
+            });
+            askAI(postData,res,obj);
+          } else {
+            res.end(JSON.stringify(obj));
+          }
           return;
+        } else {
+          obj["javacStdout"] = stdout;
+          filePath = codeObj.className;//class file path
+          exec("\""+jdkPath+'/java\" '+filePath,{cwd: 'public'}, (error, stdout, stderr) => {
+            if (error) {
+              console.error(`Error executing command: ${error.message}`);
+              obj["error"] = error.message;
+              res.end(JSON.stringify(obj));
+              return;
+            }
+            if (stderr) {
+              console.error(`Error: ${stderr}`);
+              obj["error"] = stderr;
+              res.end(JSON.stringify(obj));
+              return;
+            }
+            console.log("stdout",stdout);
+            obj["output"] = stdout;
+            res.end(JSON.stringify(obj));
+          });
         }
-        obj["javacStdout"] = stdout;
-        filePath = codeObj.className;//class file path
-        exec("\""+jdkPath+'/java\" '+filePath,{cwd: 'public'}, (error, stdout, stderr) => {
-          if (error) {
-            console.error(`Error executing command: ${error.message}`);
-            obj["error"] = error.message;
-            res.end(JSON.stringify(obj));
-            return;
-          }
-          if (stderr) {
-            console.error(`Error: ${stderr}`);
-            obj["error"] = stderr;
-            res.end(JSON.stringify(obj));
-            return;
-          }
-          console.log("stdout",stdout);
-          obj["output"] = stdout;
-          res.end(JSON.stringify(obj));
-        });
       });
     });
   } else {
@@ -149,7 +164,7 @@ app.post('/predictJavaVersion', (req, res) => {
   askAI(postData,res);
 });
 
-function askAI(postData,res) {
+function askAI(postData,res,obj) {
   const options = {
     hostname: 'localhost',
     port: 11434,
@@ -163,13 +178,27 @@ function askAI(postData,res) {
 
   const apiReq = http.request(options, (apiRes) => {
     res.setHeader('Content-Type', 'text/plain');
-
+    let aiResp = "";
     apiRes.on('data', (chunk) => {
-      res.write(chunk);
+      if(!obj) {
+        res.write(chunk);
+      } else {
+        try {
+          let chunkParsed = JSON.parse(chunk);
+          aiResp+=chunkParsed.response;
+        } catch(e) {
+
+        }
+      }
     });
 
     apiRes.on('end', () => {
-      res.end();
+      if(!obj) {
+        res.end();
+      } else {
+        obj["aiResp"] = aiResp;
+        res.end(JSON.stringify(obj));
+      }
     });
   });
 

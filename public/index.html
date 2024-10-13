@@ -383,6 +383,9 @@
                     if (chunkObj.error) {
                         error = chunkObj.error;
                         $("#popup").innerText = error;
+                        if(chunkObj.aiResp) {
+                            $("#popup").innerText += chunkObj.aiResp;
+                        }
                         break;
                     }
                     if(chunkObj) {
