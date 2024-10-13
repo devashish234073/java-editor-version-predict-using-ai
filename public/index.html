@@ -366,6 +366,8 @@
             }
             let code = editor.getValue();
             $("#popupContainer").style.display = "block";
+            $("#findFixUsingAIBtn").style.display = "none";
+            $("#applyAIFix").style.display = "none";
             $("#popup").innerText = "Please wait while getting version details using AI model " + $("#models").value;
             const response = await fetch('/predictJavaVersion', {
                 method: 'POST',
@@ -428,6 +430,8 @@
             }
             let code = editor.getValue();
             $("#popupContainer").style.display = "block";
+            $("#findFixUsingAIBtn").style.display = "none";
+            $("#applyAIFix").style.display = "none";
             let version = $("#version").innerText.replace("version:", "").trim();
             $("#popup").innerText = "Please wait while getting code output by running against jdk " + version;
             const response = await fetch('/runAgainstJdk', {
@@ -482,6 +486,8 @@
             }
             let code = editor.getValue();
             $("#popupContainer").style.display = "block";
+            $("#findFixUsingAIBtn").style.display = "none";
+            $("#applyAIFix").style.display = "none";
             $("#popup").innerText = "Please wait while getting code output using AI model " + $("#models").value;
             const response = await fetch('/runAgainstAI', {
                 method: 'POST',
