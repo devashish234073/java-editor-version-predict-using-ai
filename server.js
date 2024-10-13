@@ -135,36 +135,7 @@ app.post('/runAgainstAI', (req, res) => {
     prompt: `Guess the output when this java code runs against java ${version} compiler, do not provide any explanation, just the output of this ` + code
   });
 
-  const options = {
-    hostname: 'localhost',
-    port: 11434,
-    path: '/api/generate',
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Content-Length': Buffer.byteLength(postData)
-    }
-  };
-
-  const apiReq = http.request(options, (apiRes) => {
-    res.setHeader('Content-Type', 'text/plain');
-
-    apiRes.on('data', (chunk) => {
-      res.write(chunk);
-    });
-
-    apiRes.on('end', () => {
-      res.end();
-    });
-  });
-
-  apiReq.on('error', (e) => {
-    console.error(`Problem with request: ${e.message}`);
-    res.status(500).send('Internal Server Error');
-  });
-
-  apiReq.write(postData);
-  apiReq.end();
+  askAI(postData,res)
 });
 
 app.post('/predictJavaVersion', (req, res) => {
@@ -175,6 +146,10 @@ app.post('/predictJavaVersion', (req, res) => {
     prompt: " what is the minimum version of java required to run this code reply only in json with the version required and description keys, in the description give the reason why that version is required " + code
   });
 
+  askAI(postData,res);
+});
+
+function askAI(postData,res) {
   const options = {
     hostname: 'localhost',
     port: 11434,
@@ -205,7 +180,7 @@ app.post('/predictJavaVersion', (req, res) => {
 
   apiReq.write(postData);
   apiReq.end();
-});
+}
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
