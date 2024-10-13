@@ -1,6 +1,6 @@
 # java-editor-version-predict-using-ai
 
-See this videos for demo: 
+See these videos for demo: 
 1. https://www.youtube.com/watch?v=H0-xJ7HgPhc
 2. https://www.youtube.com/watch?v=f2UuYH3Htks
 
