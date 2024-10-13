@@ -58,6 +58,17 @@ app.post('/registerJdk', (req, res) => {
   res.end("done");
 });
 
+app.post('/findFixUsingAI',(req,res) => {
+  const code = req.body.code;
+  const error = req.body.error;
+  const MODEL = req.body.model;
+  const postData = JSON.stringify({
+    model: MODEL,
+    prompt: `I am getting this error when running a java code ${error} how to fix this. My code is ${code} please reply only a json with two keys one "issue" containing the issue and another "fix" containing the fixed code, fixed code should include my entire code along with the fix the value of the fix attribute should be an string which is the fixed code with all the quotes properly escaped so that the entire response is a valid json`
+  });
+  askAI(postData,res);
+});
+
 app.post('/runAgainstJdk', (req, res) => {
   let code = req.body.code;
   const version = req.body.version;
@@ -74,28 +85,11 @@ app.post('/runAgainstJdk', (req, res) => {
         if (error) {
           console.error(`Error executing command: ${error.message}`);
           obj["error"] = error.message;
-          if(models.length>0) {//check error agsinst AI
-            const postData = JSON.stringify({
-              model: models[0],
-              prompt: `I am getting this error when running a java code ${error.message} how to fix this. My code is ${codeObj.code} please reply only a json with two keys one "issue" containing the issue and another "fix" containing the fixed code`
-            });
-            askAI(postData,res,obj);
-          } else {
-            res.end(JSON.stringify(obj));
-          }
+          res.end(JSON.stringify(obj));
         } else if (stderr) {
           console.error(`Error: ${stderr}`);
           obj["error"] = stderr;
-          if(models.length>0) {//check error agsinst AI
-            const postData = JSON.stringify({
-              model: models[0],
-              prompt: `I am getting this error when running a java code ${error.message} how to fix this. My code is ${codeObj.code} please reply only a json with two keys one "issue" containing the issue and another "fix" containing the fixed code`
-            });
-            askAI(postData,res,obj);
-          } else {
-            res.end(JSON.stringify(obj));
-          }
-          return;
+          res.end(JSON.stringify(obj));
         } else {
           obj["javacStdout"] = stdout;
           filePath = codeObj.className;//class file path
