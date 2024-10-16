@@ -61,10 +61,15 @@ app.post('/registerJdk', (req, res) => {
 app.post('/findFixUsingAI',(req,res) => {
   const code = req.body.code;
   const error = req.body.error;
+  const jdkVersion = req.body.jdkVersion;
   const MODEL = req.body.model;
+  let prompt = `I am getting this error when running a java code ${error} when running against java ${jdkVersion} how to fix this. My code is ${code} please reply only a json with two keys one "issue" containing the issue and another "fix" containing the fixed code, fixed code should include my entire code along with the fix the value of the fix attribute should be an string which is the fixed code with all the quotes properly escaped so that the entire response is a valid json`;
+  if(MODEL.indexOf("gemma")>-1) {
+    prompt = `I am getting this error when running a java code ${error} when running against java ${jdkVersion} how to fix this. My code is ${code} please reply only a json with two keys one "issue" containing the issue and another "fix" containing the fixed code, fixed code should include my entire code along with the fix the value of the fix attribute should be an string which is the fixed code with all the quotes inside the fixed code properly escaped so that the entire response is a valid json make sure not to escape quotes that are part of json only escape the quotes inside the java fixed quote, but do not use any back ticks in the response`; 
+  }
   const postData = JSON.stringify({
     model: MODEL,
-    prompt: `I am getting this error when running a java code ${error} how to fix this. My code is ${code} please reply only a json with two keys one "issue" containing the issue and another "fix" containing the fixed code, fixed code should include my entire code along with the fix the value of the fix attribute should be an string which is the fixed code with all the quotes properly escaped so that the entire response is a valid json`
+    prompt: prompt
   });
   askAI(postData,res);
 });

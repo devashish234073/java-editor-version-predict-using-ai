@@ -202,6 +202,7 @@
     <table id="registeredJdks"></table>
     <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
     <script>
+        let jdkError = "";
         function $(selector) {
             return document.querySelector(selector);
         }
@@ -314,12 +315,13 @@
             }
             let code = editor.getValue();
             $("#popup").innerText = "Please wait while finding fix against " + $("#models").value;
+            let version = $("#version").innerText.replace("version:", "").trim();
             const response = await fetch('/findFixUsingAI', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ code: code, model: $("#models").value, "error": $("#popup").innerText })
+                body: JSON.stringify({ code: code, model: $("#models").value, "jdkVersion":version,"error": jdkError })
             });
 
             const reader = response.body.getReader();
@@ -345,6 +347,14 @@
             }
             if (!error) {
                 console.log(aiResp);
+                const parts = aiResp.split('```');
+                if (parts.length > 2) {
+                    aiResp = parts.slice(0, 2).join('```');
+                }
+                const firstBraceIndex = aiResp.indexOf('{');
+                if (firstBraceIndex !== -1) {
+                    aiResp = aiResp.slice(firstBraceIndex);
+                }
                 aiResp = aiResp.split("```").join("").trim();
                 $("#popup").innerText = aiResp;
                 aiResp = JSON.parse(aiResp);
@@ -400,6 +410,14 @@
             }
             if (!error) {
                 console.log(aiResp);
+                const parts = aiResp.split('```');
+                if (parts.length > 2) {
+                    aiResp = parts.slice(0, 2).join('```');
+                }
+                const firstBraceIndex = aiResp.indexOf('{');
+                if (firstBraceIndex !== -1) {
+                    aiResp = aiResp.slice(firstBraceIndex);
+                }
                 aiResp = aiResp.split("```").join("").trim();
                 aiResp = JSON.parse(aiResp);
                 $("#version").innerText = "version:" + aiResp.version;
@@ -456,6 +474,7 @@
                     if (chunkObj.error) {
                         error = chunkObj.error;
                         $("#popup").innerText = error;
+                        jdkError = error;
                         $("#findFixUsingAIBtn").style.display = "block";
                         if (chunkObj.aiResp) {
                             $("#popup").innerText += chunkObj.aiResp;
